@@ -1,0 +1,215 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+
+struct patients_record{
+    int  id;
+    char rec_Name[50];
+    char doctorName[50];
+    char date[12];
+}b;
+
+struct patient{
+    int id;
+    char pName[50];
+    char pClass[50];
+    int  pRoll;
+    char rec_Name[50];
+    char date[12];
+}s;
+
+FILE *fp;
+
+int main(){
+
+    int ch;
+
+    while(1){
+        system("cls");
+        printf("<== Hospital Management System ==>\n");
+        printf("1.Add Patient\n");
+        printf("2.Record List\n");
+        printf("3.Remove Record\n");
+        printf("4.Issue Patient Record\n");
+        printf("5.Issued Record List\n");
+        printf("0.Exit\n\n");
+        printf("Enter your choice: ");
+        scanf("%d", &ch);
+
+        switch(ch){
+        case 0:
+            exit(0);
+
+        case 1:
+            addRecord();
+            break;
+
+        case 2:
+            recordsList();
+            break;
+
+        case 3:
+            del();
+            break;
+
+        case 4:
+            issueRecord();
+            break;
+
+        case 5:
+            issueList();
+            break;
+
+        default:
+            printf("Invalid Choice...\n\n");
+
+        }
+        printf("Press Any Key To Continue...");
+        getch();
+    }
+
+    return 0;
+}
+
+
+void addRecord(){
+    char myDate[12];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(myDate, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon+1, tm.tm_year + 1900);
+    strcpy(b.date, myDate);
+
+    fp = fopen("books.txt", "ab");
+
+    printf("Enter record id: ");
+    scanf("%d", &b.id);
+
+    printf("Enter record name: ");
+    fflush(stdin);
+    gets(b.rec_Name);
+
+    printf("Enter Doctor name: ");
+    fflush(stdin);
+    gets(b.doctorName);
+
+    printf("Book Added Successfully");
+
+    fwrite(&b, sizeof(b), 1, fp);
+    fclose(fp);
+}
+
+
+void recordsList(){
+
+    system("cls");
+    printf("<== Available Books ==>\n\n");
+    printf("%-10s %-30s %-20s %s\n\n", "Record id", "Patient Name", "Doctor", "Date");
+
+    fp = fopen("books.txt", "rb");
+    while(fread(&b, sizeof(b), 1, fp) == 1){
+        printf("%-10d %-30s %-20s %s\n", b.id, b.rec_Name, b.doctorName, b.date);
+    }
+
+    fclose(fp);
+}
+
+void del(){
+    int id, f=0;
+    system("cls");
+    printf("<== Remove Records ==>\n\n");
+    printf("Enter Record id to remove: ");
+    scanf("%d", &id);
+
+    FILE *ft;
+
+    fp = fopen("books.txt", "rb");
+    ft = fopen("temp.txt", "wb");
+
+    while(fread(&b, sizeof(b), 1, fp) == 1){
+        if(id == b.id){
+            f=1;
+        }else{
+            fwrite(&b, sizeof(b), 1, ft);
+        }
+    }
+
+    if(f==1){
+        printf("\n\nDeleted Successfully.");
+    }else{
+        printf("\n\nRecord Not Found !");
+    }
+
+    fclose(fp);
+    fclose(ft);
+
+    remove("books.txt");
+    rename("temp.txt", "books.txt");
+
+}
+
+
+void issueRecord(){
+
+    char myDate[12];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(myDate, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon+1, tm.tm_year + 1900);
+    strcpy(s.date, myDate);
+
+    int f=0;
+
+    system("cls");
+    printf("<== Issue Records ==>\n\n");
+
+    printf("Enter Patient id to issue records: ");
+    scanf("%d", &s.id);
+
+    //Check if we have book of given id
+    fp = fopen("books.txt", "rb");
+
+    while(fread(&b, sizeof(b), 1, fp) == 1){
+        if(b.id == s.id){
+            strcpy(s.rec_Name, b.rec_Name);
+            f=1;
+            break;
+        }
+    }
+
+    if(f==0){
+        printf("No record found with this id\n");
+        printf("Please try again...\n\n");
+        return;
+    }
+
+    fp = fopen("issue.txt", "ab");
+
+    printf("Enter Patient Name: ");
+    fflush(stdin);
+    gets(s.rec_Name);
+
+    printf("Enter Patient Class: ");
+    fflush(stdin);
+    gets(s.pClass);
+
+    printf("Enter Patient Roll: ");
+    scanf("%d", &s.pRoll);
+
+    printf("Record Issued Successfully\n\n");
+
+    fwrite(&s, sizeof(s), 1, fp);
+    fclose(fp);
+}
+
+void issueList(){
+    system("cls");
+    printf("<== Records Issue List ==>\n\n");
+
+    printf("%-10s %-30s %-20s %-10s %-30s %s\n\n", "S.id", "Name", "Class", "Roll", "Record Name", "Date");
+
+    fp = fopen("issue.txt", "rb");
+    while(fread(&s, sizeof(s), 1, fp) == 1){
+        printf("%-10d %-30s %-20s %-10d %-30s %s\n", s.id, s.pName, s.pClass, s.pRoll, s.rec_Name, s.date);
+    }
+
+    fclose(fp);
+}
